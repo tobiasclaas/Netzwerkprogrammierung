@@ -1,4 +1,3 @@
-import os
 import sys
 import time
 import subprocess
@@ -49,8 +48,12 @@ def get_master():
 
 
 def set_master(address):
+    """
+    Setter method for master. The master is stored in controller_list dictionary
+    :param address: The address, containing ip and port of the controller that shall be set
+    :return: if master does not change
+    """
     old_master = get_master()
-
     if old_master == address:
         return
 
@@ -64,6 +67,13 @@ def set_master(address):
 
 # calculates the master according to lowest ip and port
 def determine_master():
+    """
+    The function is called when a new master needs to be determined for a controller.
+    First we check if there's already a controller with a quorum. If so that one is the new master.
+    If not we determine a new master based on the ip and port number. The controller with lowest ip and port number
+    is selected and set as master.
+    :return:
+    """
     # check if there's a master with quorum
     master_list = {}
     for controller in controller_list:  # calculate how many controllers voted for this controller as master
@@ -102,6 +112,11 @@ def determine_master():
 
 # script that controller executes when it becomes the master
 def i_am_master():
+    """
+    Function that is called when a controller becomes master. It executes a certain script that can be stated in
+    program args.
+    :return:
+    """
     if master_script != "":
         execute_script(master_script)
     else:
@@ -110,14 +125,23 @@ def i_am_master():
 
 # script that controller executes when it becomes a worker
 def i_am_worker():
+    """
+    Function that is called when a controller becomes worker. It executes a certain script that can be stated in
+    program args.
+    :return:
+    """
     if worker_script != "":
         execute_script(worker_script)
     else:
         print("I am worker!")
 
 
-
 def execute_script(script):
+    """
+    A function that executes a script according to its type.
+    :param script: The script file name.
+    :return:
+    """
     if script.endswith(".py"):  # if file is python file
         subprocess.call("python " + script, shell=True)
     elif script.endswith(".sh"):
@@ -126,9 +150,13 @@ def execute_script(script):
 
 # check what other controllers think who is master
 def check_master():
+    """
+    Check whether there is a majority so a quorum can be made due to potentially new controllers.
+    If more that half of all registered controllers are active determine master, e.g. at startup.
+    If a master already exists check if it is available. If not determine new master.
+    :return:
+    """
     master = get_master()
-
-    # is master active or no master?
     if num_controllers_active < num_controllers / 2:  # need quorum
         set_master(None)
         return
@@ -143,19 +171,23 @@ def check_master():
 
 # checks the status of other controllers and store it in controller_list
 def check_other_controller_status():
+    """
+    The controller requests all other controllers and stores their availability and master. It also counts the number
+    of active controllers, which is important for the quorum.
+    :return:
+    """
     global num_controllers_active
-
     num_controllers_active = 0
 
     for controller in controller_list:
-        suffix = "/request"
+        address_suffix = "/request"
 
         if controller == my_address:  # skip self
             num_controllers_active += 1
             continue
 
         try:
-            response = requests.get(controller + suffix, timeout=0.2).text
+            response = requests.get(controller + address_suffix, timeout=0.2).text
             num_controllers_active += 1
             if response == "None":
                 response = None  # controller has no master
@@ -166,6 +198,13 @@ def check_other_controller_status():
 
 
 def scan():
+    """
+    The method is called at the start of a controller. It sets the controller as active and calls the function
+    i_am_worker, because the new controller can not enter the environment as master.
+    Then it basically starts an endless loop checking the other controllers and making sure the master is available in
+    a 5 seconds rhythm.
+    :return:
+    """
     controller_list[my_address] = (True, None)  # set controller to alive
     i_am_worker()
     while running:  # go in infinite loop scanning
