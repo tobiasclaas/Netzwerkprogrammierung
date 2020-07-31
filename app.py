@@ -1,5 +1,7 @@
+import os
 import sys
 import time
+import subprocess
 
 from flask import Flask
 from pip._vendor import requests
@@ -21,21 +23,28 @@ num_controllers = len(controller_list)
 
 
 @app.route('/')
-def hello_world():
-    return 'Hello World!'
+def print_controller():
+    """
+    This site is for debug only. It shows for each controller if it is active and what their master is.
+    :return: the dictionary of controllers
+    """
+    return str(controller_list)
 
 
 @app.route('/request')
 def send_message():
+    """
+    All controller communicate with each other via this service.
+    :return: current master of controller
+    """
     return str(get_master())
 
 
-@app.route('/controller')   # DEBUG
-def print_controller():
-    return str(controller_list)
-
-
 def get_master():
+    """
+    Getter method of master
+    :return: master address as string or None if controller has no master
+    """
     return controller_list[my_address][1]
 
 
@@ -49,7 +58,6 @@ def set_master(address):
 
     if old_master == my_address:
         i_am_worker()
-
     if address == my_address:
         i_am_master()
 
@@ -92,19 +100,28 @@ def determine_master():
     set_master("http://" + master_ip + ":" + master_port)
 
 
-# script that sets controller as master
+# script that controller executes when it becomes the master
 def i_am_master():
     if master_script != "":
-        pass
+        execute_script(master_script)
     else:
         print("I am master!")
 
 
+# script that controller executes when it becomes a worker
 def i_am_worker():
     if worker_script != "":
-        pass
+        execute_script(worker_script)
     else:
         print("I am worker!")
+
+
+
+def execute_script(script):
+    if script.endswith(".py"):  # if file is python file
+        subprocess.call("python " + script, shell=True)
+    elif script.endswith(".sh"):
+        subprocess.call("sh " + script, shell=True)
 
 
 # check what other controllers think who is master
