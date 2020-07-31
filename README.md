@@ -64,6 +64,19 @@ Den Wissensstand jedes Controller kann man angenehm in dessen Adresse überprüf
 ````
 http://127.0.0.1:5000/
 ````
+Ein möglicher Anwendungsfall wäre wie folgt:
+````
+http://127.0.0.1:5000 mit IP=127.0.0.1 und Port=5000
+http://127.0.0.1:5001 mit IP=127.0.0.1 und Port=5001
+http://127.0.0.1:5002 mit IP=127.0.0.1 und Port=5002
+# http://127.0.0.1:5000 mit IP=127.0.0.1 und Port=5000 wird master
+http://127.0.0.1:5003 mit IP=127.0.0.1 und Port=5003
+# kill http://127.0.0.1:5000 mit IP=127.0.0.1 und Port=5000
+# http://127.0.0.1:5000 mit IP=127.0.0.1 und Port=5001 wird master
+# füge http://127.0.0.1:5000 mit IP=127.0.0.1 und Port=5000 wieder hinzu, dieser akzeptiert den aktuellen master
+http://127.0.0.1:5004 mit IP=127.0.0.1 und Port=5004
+````
+
 Die Tests können mit unterem Befehl aufgerufen werden.
 ````
 python -m unittest app_test.py
