@@ -64,16 +64,11 @@ def set_master(address):
         i_am_master()
 
 
-# calculates the master according to lowest ip and port
-def determine_master():
+def does_master_exist():
     """
-    The function is called when a new master needs to be determined for a controller.
-    First we check if there's already a controller with a quorum. If so that one is the new master.
-    If not we determine a new master based on the ip and port number. The controller with lowest ip and port number
-    is selected and set as master.
-    :return:
+    Check if there's already a controller with a quorum. If so that one is the new master.
+    :return: Return controller with quorum of None
     """
-    # check if there's a master with quorum
     master_list = {}
     for controller in controller_list:  # calculate how many controllers voted for this controller as master
         if not controller_list[controller][0]:
@@ -85,10 +80,17 @@ def determine_master():
 
     for controller in master_list:
         if master_list[controller] > num_controllers / 2:
-            set_master(controller)
-            return
+            return controller
 
-    # give tip otherwise
+    return None
+
+
+def determine_new_master():
+    """
+    If not we determine a new master based on the ip and port number. The controller with lowest ip and port number
+    is selected and set as master.
+    :return: full address of the controller with lowest ip and port
+    """
     master_ip = ""
     master_port = ""
 
@@ -106,7 +108,25 @@ def determine_master():
                 master_ip = ip
                 master_port = port
 
-    set_master("http://" + master_ip + ":" + master_port)
+    return "http://" + master_ip + ":" + master_port
+
+
+# calculates the master according to lowest ip and port
+def determine_master():
+    """
+    The function is called when a new master needs to be determined for a controller.
+    :return:
+    """
+    # check if there's a master with quorum
+    controller = does_master_exist()
+
+    if controller is not None:
+        set_master(controller)
+        return
+
+    # give tip otherwise
+    address = determine_new_master()
+    set_master(address)
 
 
 # script that controller executes when it becomes the master
