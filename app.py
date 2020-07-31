@@ -8,7 +8,6 @@ from threading import Thread
 
 app = Flask(__name__)
 
-
 controller_list = {     # dictionary of controllers, 4 in this case, all set inactive(False)
     'http://127.0.0.1:5000': (False, None),  # at the beginning, active is True
     'http://127.0.0.1:5001': (False, None),
@@ -58,6 +57,7 @@ def set_master(address):
 
     controller_list[my_address] = (True, address)
 
+    # if status changes one of the scripts need to be executed
     if old_master == my_address:
         i_am_worker()
     if address == my_address:
@@ -74,12 +74,12 @@ def does_master_exist(controller_list):
         if not controller_list[controller][0]:
             continue
         if controller_list[controller][1] in master_list:  # is master of this controller in controller-list
-            master_list[str(controller_list[controller][1])] += 1
+            master_list[str(controller_list[controller][1])] += 1  # increment when controller is already in list
         else:
-            master_list.update({controller: 1})
+            master_list.update({controller: 1})  # no entry for that controller so make a new one
 
     for controller in master_list:
-        if master_list[controller] > num_controllers / 2:
+        if master_list[controller] > num_controllers / 2:  # does controller have quorum?
             return controller
 
     return None
@@ -109,7 +109,7 @@ def determine_new_master(controller_list):
                 master_port = port
 
     address = "http://" + master_ip + ":" + master_port
-    if master_ip == "" and master_port == "":
+    if master_ip == "" and master_port == "":  # no suitable controller
         address = None
 
     return address
@@ -124,7 +124,7 @@ def determine_master():
     # check if there's a master with quorum
     controller = does_master_exist(controller_list)
 
-    if controller is not None:
+    if controller is not None:  # if controller is valid
         set_master(controller)
         return
 
@@ -184,7 +184,7 @@ def check_master():
         set_master(None)
         return
 
-    if master == "None" or master is None:
+    if master == "None" or master is None:  # of there's no valid master but quorum is possible
         determine_master()
         return
     else:   # not enough controller for quorum
@@ -200,7 +200,7 @@ def check_other_controller_status():
     :return:
     """
     global num_controllers_active
-    num_controllers_active = 0
+    num_controllers_active = 0  # count number of active controller
 
     for controller in controller_list:
         address_suffix = "/request"
@@ -210,14 +210,14 @@ def check_other_controller_status():
             continue
 
         try:
-            response = requests.get(controller + address_suffix, timeout=0.2).text
+            response = requests.get(controller + address_suffix, timeout=0.2).text  # if connection failed jump to except
             num_controllers_active += 1
             if response == "None":
                 response = None  # controller has no master
             controller_list[controller] = (True, response)  # if the controller answered, set True
         except (ConnectionError, ConnectionRefusedError, Exception):
             # if request.get fails after 0.2 seconds exception is thrown
-            controller_list[controller] = (False, None)
+            controller_list[controller] = (False, None)  # not active and thus no valid master
 
 
 def scan():
