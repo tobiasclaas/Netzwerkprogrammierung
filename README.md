@@ -64,7 +64,10 @@ Den Wissensstand jedes Controller kann man angenehm in dessen Adresse überprüf
 ````
 http://127.0.0.1:5000/
 ````
-
+Die Tests können mit unterem Befehl aufgerufen werden.
+````
+python -m unittest app_test.py
+````
 
 ## PyDoc
 Die PyDocs können jederzeit mit: 

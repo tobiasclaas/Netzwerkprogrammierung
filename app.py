@@ -64,7 +64,7 @@ def set_master(address):
         i_am_master()
 
 
-def does_master_exist():
+def does_master_exist(controller_list):
     """
     Check if there's already a controller with a quorum. If so that one is the new master.
     :return: Return controller with quorum of None
@@ -85,7 +85,7 @@ def does_master_exist():
     return None
 
 
-def determine_new_master():
+def determine_new_master(controller_list):
     """
     If not we determine a new master based on the ip and port number. The controller with lowest ip and port number
     is selected and set as master.
@@ -108,7 +108,11 @@ def determine_new_master():
                 master_ip = ip
                 master_port = port
 
-    return "http://" + master_ip + ":" + master_port
+    address = "http://" + master_ip + ":" + master_port
+    if master_ip == "" and master_port == "":
+        address = None
+
+    return address
 
 
 # calculates the master according to lowest ip and port
@@ -118,14 +122,14 @@ def determine_master():
     :return:
     """
     # check if there's a master with quorum
-    controller = does_master_exist()
+    controller = does_master_exist(controller_list)
 
     if controller is not None:
         set_master(controller)
         return
 
     # give tip otherwise
-    address = determine_new_master()
+    address = determine_new_master(controller_list)
     set_master(address)
 
 
