@@ -1,11 +1,10 @@
 import sys
 import time
 import subprocess
+import requests
 
 from flask import Flask
-from pip._vendor import requests
 from threading import Thread
-from pip._vendor.urllib3.exceptions import NewConnectionError
 
 app = Flask(__name__)
 
@@ -192,7 +191,7 @@ def check_other_controller_status():
             if response == "None":
                 response = None  # controller has no master
             controller_list[controller] = (True, response)  # if the controller answered, set True
-        except (ConnectionError, ConnectionRefusedError, NewConnectionError, Exception):
+        except (ConnectionError, ConnectionRefusedError, Exception):
             # if request.get fails after 0.2 seconds exception is thrown
             controller_list[controller] = (False, None)
 
